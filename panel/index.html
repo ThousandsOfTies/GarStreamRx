@@ -7,13 +7,15 @@
     <script type="module" src="/components/bridge-status.js"></script>
     <script type="module" src="/components/rotary-control.js"></script>
     <script type="module" src="/components/ili9341-display.js"></script>
+    <script type="module" src="/components/video-receiver.js"></script>
     <link rel="stylesheet" href="./panel.css">
   </head>
   <body>
     <main>
       <header><div><p>GARSTREAM</p><h1>RX · Video receiver</h1></div><gar-bridge-status></gar-bridge-status></header>
       <p class="lead">The receiver's display and channel control. It is deployed and opened independently from GarStreamTx.</p>
-      <div class="grid"><gar-ili9341-display></gar-ili9341-display><gar-rotary-control></gar-rotary-control></div>
+      <div class="grid"><gar-video-receiver></gar-video-receiver><gar-rotary-control></gar-rotary-control></div>
+      <gar-ili9341-display></gar-ili9341-display>
     </main>
   </body>
 </html>
