@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>GarStreamRx simulator</title>
+    <script type="module" src="/components/bridge-status.js"></script>
+    <script type="module" src="/components/rotary-control.js"></script>
+    <script type="module" src="/components/ili9341-display.js"></script>
+    <link rel="stylesheet" href="./panel.css">
+  </head>
+  <body>
+    <main>
+      <header><div><p>GARSTREAM</p><h1>RX · Video receiver</h1></div><gar-bridge-status></gar-bridge-status></header>
+      <p class="lead">The receiver's display and channel control. It is deployed and opened independently from GarStreamTx.</p>
+      <div class="grid"><gar-ili9341-display></gar-ili9341-display><gar-rotary-control></gar-rotary-control></div>
+    </main>
+  </body>
+</html>

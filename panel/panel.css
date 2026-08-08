@@ -1,0 +1,10 @@
+:root { color-scheme: dark; font-family: Inter, system-ui, sans-serif; background: #18111f; color: #f4eafa; }
+body { margin: 0; padding: 24px; } main { max-width: 900px; margin: auto; }
+header { display: flex; justify-content: space-between; gap: 16px; align-items: center; border-bottom: 1px solid #5a3a6c; padding-bottom: 18px; }
+header p { color: #f0abfc; font-size: .75rem; letter-spacing: .18em; margin: 0; } h1 { margin: 4px 0 0; font-size: 1.5rem; }
+gar-bridge-status { font-size: .85rem; color: #fbbf24; } gar-bridge-status[data-connected="true"] { color: #86efac; }
+.lead { color: #ddc9e8; }.grid { display: grid; grid-template-columns: minmax(0, 1fr) 210px; gap: 20px; }
+gar-ili9341-display section, gar-rotary-control section { display: grid; gap: 12px; padding: 16px; border: 1px solid #5a3a6c; border-radius: 12px; background: #281d32; }
+.label { color: #f0abfc; font-size: .7rem; letter-spacing: .12em; } canvas { width: 100%; background: #0d0911; image-rendering: pixelated; }
+gar-rotary-control output { font-size: 3rem; font-variant-numeric: tabular-nums; } button { padding: 10px; border: 1px solid #8a5ba5; border-radius: 6px; color: inherit; background: #482c58; cursor: pointer; }
+@media (max-width: 650px) { .grid { grid-template-columns: 1fr; } header { align-items: start; flex-direction: column; } }
