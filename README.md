@@ -122,3 +122,11 @@ Artifact manifest は製品固有の定義です。必要な製品ブランチ�
 
 PlatformIO は Python 仮想環境 `~/.venvs/platformio` にインストールされ、
 `~/.bashrc` に PATH が追加されます。
+
+## GarStreamRx simulation
+
+Rx アプリは実機と同じ UDP port 5600 で MJPEG/RTP を受け、デコードした RGB565
+フレームを `/dev/spidev0.0` の ILI9341 インターフェースへ書き込みます。EC2 上では
+GAR の CUSE SPI device がその書き込みを受け、Bridge を通じて Web Panel に表示します。
+したがって受信アプリから見た UDP・GPIO・SPI のインターフェースはシミュレータと実機で
+共通です。
