@@ -53,8 +53,8 @@ printf '%s\n' "${panel_dest}" > "${artifact_root}/files/panel-dir"
 cat > "${service_file}" <<EOF
 [Unit]
 Description=GarStreamRx simulation application
-After=network-online.target gar-gpio-sim.service gar-cuse-spi@spidev0.0.service
-Wants=network-online.target gar-gpio-sim.service gar-cuse-spi@spidev0.0.service
+After=network-online.target gar-gpio-sim.service gar-cuse-spi@spidev0.0.service gar-bridge.service
+Wants=network-online.target gar-gpio-sim.service gar-cuse-spi@spidev0.0.service gar-bridge.service
 PartOf=gar-sim.target
 
 [Service]
@@ -68,6 +68,7 @@ Environment=GAR_ENC_CLK_GPIO=20
 Environment=GAR_ENC_DT_GPIO=21
 Environment=GAR_ENC_SW_GPIO=22
 Environment=GAR_INITIAL_VIDEO_SOURCE=RX
+ExecStartPre=/bin/sh -c 'for n in \$(seq 1 50); do [ -S /run/gar/hw_sim.sock ] && exit 0; sleep 0.1; done; exit 1'
 ExecStart=/usr/bin/python3 ${deploy_dest}/video_monitor.py
 Restart=on-failure
 RestartSec=1
