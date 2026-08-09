@@ -130,3 +130,8 @@ Rx アプリは実機と同じ UDP port 5600 で MJPEG/RTP を受け、デコー
 GAR の CUSE SPI device がその書き込みを受け、Bridge を通じて Web Panel に表示します。
 したがって受信アプリから見た UDP・GPIO・SPI のインターフェースはシミュレータと実機で
 共通です。
+
+TXはUDP 5601でSourceとして自己広告します。RXは検出したTXをチャンネル一覧として保持し、
+`SOURCE`メニューで選択されたTXへlease付き送信要求を返します。同一LANでは設定不要です。
+EC2のようにbroadcastが届かないnetworkでは、product build hookがRuntimeのworkspace情報から
+TX private IPをRX側の`GAR_STREAM_DISCOVERY_PEERS`へ渡し、unicast queryで同じprotocolを使います。

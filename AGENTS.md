@@ -38,6 +38,12 @@ Artifact manifests are product-specific config, not shared runtime code. Use
 `config/artifact-manifest.example.json` as a template when a product branch
 needs a deploy manifest.
 
+GarStream connection ownership is RX-driven. TX devices advertise themselves,
+while RX retains discovered Sources, selects a channel, and renews its stream
+request lease. Routed-network discovery peers are RX configuration; never add
+an RX address setting to TX. Keep `source_browser.py` compatible with the TX
+repository's `gar-stream/1` messages in `source_advertiser.py`.
+
 ## Submodule Edits
 
 On product branches that use submodules, commit and push the child repository
