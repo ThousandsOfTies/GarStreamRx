@@ -1,0 +1,62 @@
+{
+  "schema_version": 1,
+  "product": "gar-stream-rx",
+  "requirements": [
+    {
+      "id": "display",
+      "kind": "spi",
+      "component": "ili9341",
+      "voltage_v": 3.3,
+      "required_drivers": ["spidev"],
+      "mode": 0,
+      "min_speed_hz": 10000000,
+      "device": "/dev/spidev0.0"
+    },
+    {
+      "id": "lcd-dc",
+      "kind": "gpio",
+      "component": "ili9341",
+      "voltage_v": 3.3,
+      "required_drivers": ["gpio-cdev"],
+      "direction": "output"
+    },
+    {
+      "id": "lcd-rst",
+      "kind": "gpio",
+      "component": "ili9341",
+      "voltage_v": 3.3,
+      "required_drivers": ["gpio-cdev"],
+      "direction": "output"
+    },
+    {
+      "id": "encoder-a",
+      "kind": "gpio",
+      "component": "ky-040",
+      "voltage_v": 3.3,
+      "required_drivers": ["gpio-cdev"],
+      "direction": "input"
+    },
+    {
+      "id": "encoder-b",
+      "kind": "gpio",
+      "component": "ky-040",
+      "voltage_v": 3.3,
+      "required_drivers": ["gpio-cdev"],
+      "direction": "input"
+    },
+    {
+      "id": "encoder-switch",
+      "kind": "gpio",
+      "component": "ky-040",
+      "voltage_v": 3.3,
+      "required_drivers": ["gpio-cdev"],
+      "direction": "input"
+    },
+    {
+      "id": "network",
+      "kind": "network",
+      "component": "ethernet",
+      "required_drivers": ["linux-netdev"]
+    }
+  ]
+}

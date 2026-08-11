@@ -90,6 +90,20 @@ GAR 管理の一時的な runtime 設定であり、persistent target config
 `/etc/gar/<app>.env` とは別です。artifact に persistent target config や machine IP を
 含めません。
 
+## GarStream hardware contract
+
+RXのdisplay、KY-040、network要件は `hardware/requirements.json`、Luckfox Lyra Plusの
+resourceとの対応は `hardware/bindings/luckfox-rk3506.json` に追跡します。Target capability
+を含めた3層を次で検査してから実機へ配置します。
+
+```bash
+gar hw validate --workspace Local/GarStreamRx --binding hardware/bindings/luckfox-rk3506.json --json
+```
+
+simulatorのlegacy CSVは同じ `hardware/` にあり、KY-040=20/21/22、LCD DC/RST=23/24の
+device contractを保持します。これは実機GPIO offsetやSSH/IPをartifactに含めるものでは
+ありません。
+
 ## Product Branches
 
 製品ブランチでは、共通シーケンスをなるべく触らず、個別定義だけを追加します。

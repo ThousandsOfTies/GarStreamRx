@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "product": "gar-stream-rx",
+  "target_id": "luckfox-rk3506",
+  "mappings": [
+    {"requirement": "display", "resource": "spi0.cs0", "physical_pins": ["RM_IO6:MOSI", "RM_IO5:MISO", "RM_IO7:SCLK", "RM_IO4:CS0"], "pinmux": "spi0"},
+    {"requirement": "lcd-dc", "resource": "gpio0", "line": 3, "physical_pin": "RM_IO3", "pinmux": "gpio"},
+    {"requirement": "lcd-rst", "resource": "gpio0", "line": 2, "physical_pin": "RM_IO2", "pinmux": "gpio"},
+    {"requirement": "encoder-a", "resource": "gpio0", "line": 8, "physical_pin": "RM_IO8", "pinmux": "gpio"},
+    {"requirement": "encoder-b", "resource": "gpio0", "line": 9, "physical_pin": "RM_IO9", "pinmux": "gpio"},
+    {"requirement": "encoder-switch", "resource": "gpio0", "line": 10, "physical_pin": "RM_IO10", "pinmux": "gpio"},
+    {"requirement": "network", "resource": "network0", "physical_pin": "RJ45", "pinmux": "ethernet"}
+  ]
+}
