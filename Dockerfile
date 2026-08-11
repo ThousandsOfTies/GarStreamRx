@@ -33,15 +33,20 @@ RUN set -eux; \
       dfu-util \
       file \
       gcc-aarch64-linux-gnu \
+      g++-aarch64-linux-gnu \
       git \
       libffi-dev \
       libfuse3-dev \
       libfuse3-dev:arm64 \
+      libglib2.0-dev:arm64 \
+      libgstreamer1.0-dev:arm64 \
+      libgstreamer-plugins-base1.0-dev:arm64 \
       libssl-dev \
       libusb-1.0-0 \
       make \
       ninja-build \
       openssh-client \
+      pkg-config \
       python3 \
       python3-pip \
       python3-venv; \

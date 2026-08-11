@@ -125,7 +125,16 @@ PlatformIO は Python 仮想環境 `~/.venvs/platformio` にインストール�
 
 ## GarStreamRx simulation
 
-Rx アプリは実機と同じ UDP port 5600 で MJPEG/RTP を受け、デコードした RGB565
+正式なRxアプリは`sources/gar-stream-rx/native/`のC++実装です。host-independentな
+state/PnPテストを実行した後、EC2用aarch64 ELFをクロスビルドしてartifactへ格納します。
+
+```bash
+gar sim app build --workspace Local/GarStreamRx
+gar sim app deploy --workspace Local/GarStreamRx
+gar sim runtime start --workspace Local/GarStreamRx
+```
+
+Rxアプリは実機と同じ UDP port 5600 で MJPEG/RTP を受け、デコードした RGB565
 フレームを `/dev/spidev0.0` の ILI9341 インターフェースへ書き込みます。EC2 上では
 GAR の CUSE SPI device がその書き込みを受け、Bridge を通じて Web Panel に表示します。
 したがって受信アプリから見た UDP・GPIO・SPI のインターフェースはシミュレータと実機で
@@ -135,3 +144,66 @@ TXはUDP 5601でSourceとして自己広告します。RXは検出したTXをチ
 `SOURCE`メニューで選択されたTXへlease付き送信要求を返します。同一LANでは設定不要です。
 EC2のようにbroadcastが届かないnetworkでは、product build hookがRuntimeのworkspace情報から
 TX private IPをRX側の`GAR_STREAM_DISCOVERY_PEERS`へ渡し、unicast queryで同じprotocolを使います。
+
+EC2はaarch64、Luckfox Lyra Plusはarmv7lなので、同じCPUバイナリにはなりません。
+ソース、GStreamer pipeline、PnP、GPIO/SPI I/Fは共通にし、Lyra版だけはRK3506
+Buildroot SDKのtoolchain/sysrootで別ビルドします。`product-target-build.sh`は
+`luckfox-rk3506`だけを受け付け、生成物がARM 32-bit ELFであることを検査するため、
+aarch64 simulation artifactを実機へ誤配布しません。
+
+## GarStreamRx physical target
+
+最初にLuckfox SDKでrootfsを一度buildし、`sources/gar-stream-rx/README.md`に列挙した
+GStreamer packageをsysroot/target stagingへ生成します。target artifactは必要なruntime
+library、plugin、fontだけを同梱するため、実機rootfs全体の書き換えは不要です。SDKの場所と
+実機設定はGit管理しないlocal設定へ記入します。
+
+```bash
+cp config/rk3506-sdk.env.example config/rk3506-sdk.env
+cp config/gar-stream-rx.target.env.example config/gar-stream-rx.target.env
+# SDK pathを修正。GPIO値は同梱exampleが下記の標準配線に対応
+```
+
+SDKの作業ツリーを用意した後は、公式対応環境のUbuntu 22.04コンテナでLyra Plus
+（256MB SPI NAND版）のBuildrootを構成・buildできます。必要なGStreamer pluginはscriptが
+毎回明示的に有効化するため、vendor SDKのdefconfigを直接変更しません。
+
+```bash
+# 設定だけを生成・確認
+scripts/build-rk3506-sdk-rootfs.sh config
+
+# toolchain/sysrootと実機用rootfs imageを生成
+scripts/build-rk3506-sdk-rootfs.sh build
+```
+
+target buildは再現可能なDocker build環境へSDKの`output/.../host`をread-only mountし、
+SDK付属の`arm-buildroot-linux-gnueabihf-g++`とsysrootでARMv7 binaryを作成します。
+またstock 6.1.84 imageで省略されている`spi-rockchip.ko`と`spidev.ko`だけをSDK kernel
+sourceから同じABIで作り、artifact内へ同梱します。このmodule buildのhost tool生成には
+WSL側の`gcc`、`flex`、`bison`、`m4`が必要です。
+
+```bash
+gar target build --workspace Local/GarStreamRx
+
+# 初回、またはTarget recipe更新後だけ
+gar target prepare --workspace Local/GarStreamRx
+
+gar target deploy --workspace Local/GarStreamRx
+```
+
+`config/gar-stream-rx.target.env`が存在する場合はartifactに含まれ、deploy時に
+`/etc/gar/gar-stream-rx.env`へ配置されます。`prepare`はBuildroot用の限定installerと
+BusyBox init templateだけを導入します。初回`deploy`は現在のboot DTBへSPI0/spidevだけを
+追加し、元boot imageを`/var/lib/gar/backups`へ保存します。このとき再起動が必要です。
+再起動後は`/etc/init.d/S95gar-stream-rx`から起動し、artifact内のSPI moduleを必要な場合
+だけloadしてから同じ実機binaryを実行します。以後のdeployはアプリdirectoryをatomicに
+交換して直ちに再起動します。将来のimageがdriverを内蔵した場合、module loadは自動的に
+skipされます。
+systemd、Python、simulation用GPIO/SPI deviceは実機へ配置しません。
+
+実機上の確認:
+
+```bash
+ssh luckfox-lyra '/etc/init.d/S95gar-stream-rx status'
+ssh luckfox-lyra 'tail -n 50 /var/log/gar/gar-stream-rx.log'
+```

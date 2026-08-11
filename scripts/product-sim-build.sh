@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # GaplessAgentRuntime invokes scripts/product-sim-build.sh for `gar sim build`.
-# GarStreamRx is a Python application for the Luckfox RV1106 target.  The
-# simulation artifact is therefore a validated application bundle, while
-# `gar sim env build` builds the separate Linux device stubs and web bridge.
+# GarStreamRx uses one native C++ source tree for the simulator and physical
+# target.  This hook tests the host-independent core and cross-compiles the
+# Ubuntu/aarch64 binary used on the EC2 simulation runtime.  `gar sim env
+# build` builds the separate Linux device stubs and web bridge.
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -14,7 +15,7 @@ fi
 
 app_dir="${repo_root}/${GAR_SIM_APP_DIR:-sources/gar-stream-rx}"
 tools_dir="${repo_root}/${GAR_TOOLS_DIR:-sources/gar-tools}"
-target="${GAR_SIM_TARGET:-luckfox-rv1106}"
+target="${GAR_SIM_TARGET:-luckfox-rk3506}"
 artifact_root="${repo_root}/${GAR_SIM_ARTIFACT_ROOT:-artifacts/from-codespace}"
 artifact_dir="${artifact_root}/files/gar-stream-rx"
 panel_dir="${artifact_root}/files/panel"
@@ -34,7 +35,7 @@ if [[ "${1:-}" == "clean" ]]; then
   exit 0
 fi
 
-if [[ ! -f "${app_dir}/video_monitor.py" || ! -f "${app_dir}/requirements.txt" || ! -d "${repo_root}/panel" || ! -d "${tools_dir}/targets/linux-device/runtime" ]]; then
+if [[ ! -f "${app_dir}/native/CMakeLists.txt" || ! -d "${repo_root}/panel" || ! -d "${tools_dir}/targets/linux-device/runtime" ]]; then
   echo "missing simulation sources; run: git submodule update --init --recursive" >&2
   exit 1
 fi
@@ -42,11 +43,8 @@ fi
 rm -rf "${artifact_dir}" "${panel_dir}"
 mkdir -p "${artifact_dir}"
 
-# Keep the deployable app self-contained and validate all Python sources in
-# the copied artifact, so build output never adds __pycache__ to the submodule.
-cp "${app_dir}"/*.py "${app_dir}/requirements.txt" "${artifact_dir}/"
+"${repo_root}/scripts/build-native-rx.sh" "${artifact_dir}/gar-stream-rx"
 cp -a "${repo_root}/panel" "${panel_dir}"
-python3 -m compileall -q -f "${artifact_dir}"
 
 printf '%s\n' "${panel_dest}" > "${artifact_root}/files/panel-dir"
 
@@ -80,20 +78,21 @@ PartOf=gar-sim.target
 [Service]
 Type=simple
 WorkingDirectory=${deploy_dest}
-Environment=PYTHONUNBUFFERED=1
 Environment=GAR_GPIO_CHIP=/dev/gpiochip0
+Environment=GAR_SPI_DEVICE=/dev/spidev0.0
+Environment=GAR_SPI_MAX_HZ=24000000
 Environment=GAR_LCD_DC_GPIO=23
 Environment=GAR_LCD_RST_GPIO=24
 Environment=GAR_ENC_CLK_GPIO=20
 Environment=GAR_ENC_DT_GPIO=21
 Environment=GAR_ENC_SW_GPIO=22
-Environment=GAR_INITIAL_VIDEO_SOURCE=AUTO
 Environment=GAR_STREAM_RECEIVER_ID=gar-stream-rx-sim
 Environment=GAR_STREAM_DISCOVERY_PORT=5601
 Environment=GAR_STREAM_DISCOVERY_PEERS=${discovery_peers}
 Environment=GAR_STREAM_RX_PORT=5600
+EnvironmentFile=-/etc/gar/gar-stream-rx.env
 ExecStartPre=/bin/sh -c 'for n in \$(seq 1 50); do [ -S /run/gar/hw_sim.sock ] && exit 0; sleep 0.1; done; exit 1'
-ExecStart=/usr/bin/python3 ${deploy_dest}/video_monitor.py
+ExecStart=${deploy_dest}/gar-stream-rx
 Restart=on-failure
 RestartSec=1
 EOF
@@ -118,8 +117,9 @@ deploy = payload.setdefault("deploy", {})
 deploy["app"] = {
     "files": [
         {
-            "src": "files/gar-stream-rx",
-            "dest": destination,
+            "src": "files/gar-stream-rx/gar-stream-rx",
+            "dest": f"{destination}/gar-stream-rx",
+            "mode": "0755",
         },
         {"src": "files/panel", "dest": panel_destination},
         {"src": "files/panel-dir", "dest": "/etc/gar/panel-dir", "mode": "0644"},

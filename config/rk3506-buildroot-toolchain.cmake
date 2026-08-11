@@ -1,0 +1,25 @@
+cmake_minimum_required(VERSION 3.16)
+
+set(CMAKE_SYSTEM_NAME Linux)
+set(CMAKE_SYSTEM_PROCESSOR arm)
+
+foreach(variable RK3506_TOOLCHAIN_BIN RK3506_TRIPLE RK3506_SYSROOT)
+    if("$ENV{${variable}}" STREQUAL "")
+        message(FATAL_ERROR "${variable} is not set")
+    endif()
+endforeach()
+
+set(_rk3506_prefix "$ENV{RK3506_TOOLCHAIN_BIN}/$ENV{RK3506_TRIPLE}-")
+set(CMAKE_C_COMPILER "${_rk3506_prefix}gcc")
+set(CMAKE_CXX_COMPILER "${_rk3506_prefix}g++")
+set(CMAKE_AR "${_rk3506_prefix}ar")
+set(CMAKE_RANLIB "${_rk3506_prefix}ranlib")
+set(CMAKE_STRIP "${_rk3506_prefix}strip")
+set(CMAKE_SYSROOT "$ENV{RK3506_SYSROOT}")
+set(CMAKE_TRY_COMPILE_TARGET_TYPE STATIC_LIBRARY)
+
+set(CMAKE_FIND_ROOT_PATH "$ENV{RK3506_SYSROOT}")
+set(CMAKE_FIND_ROOT_PATH_MODE_PROGRAM NEVER)
+set(CMAKE_FIND_ROOT_PATH_MODE_LIBRARY ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_INCLUDE ONLY)
+set(CMAKE_FIND_ROOT_PATH_MODE_PACKAGE ONLY)

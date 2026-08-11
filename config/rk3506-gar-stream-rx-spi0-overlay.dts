@@ -1,0 +1,23 @@
+/dts-v1/;
+/plugin/;
+
+/ {
+	compatible = "rockchip,rk3506";
+
+	fragment@0 {
+		target-path = "/spi@ff120000";
+
+		__overlay__ {
+			status = "okay";
+			pinctrl-0 = <>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			spidev@0 {
+				compatible = "rockchip,spidev";
+				reg = <0>;
+				spi-max-frequency = <24000000>;
+			};
+		};
+	};
+};
