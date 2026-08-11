@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "name": "GarStream",
+  "nodes": [
+    {
+      "id": "tx",
+      "workspace": "Local/GarStreamTx",
+      "app": "gar-stream-tx",
+      "role": "source",
+      "environment": "sim",
+      "runtime_env": {
+        "GAR_STREAM_DISCOVERY_PORT": {
+          "link_port": "discovery"
+        }
+      }
+    },
+    {
+      "id": "rx",
+      "workspace": "Local/GarStreamRx",
+      "app": "gar-stream-rx",
+      "role": "receiver",
+      "environment": "sim",
+      "runtime_env": {
+        "GAR_STREAM_DISCOVERY_PEERS": {
+          "node_private_ip": "tx"
+        },
+        "GAR_STREAM_DISCOVERY_PORT": {
+          "link_port": "discovery"
+        },
+        "GAR_STREAM_RX_PORT": {
+          "link_port": "media"
+        }
+      }
+    }
+  ],
+  "links": [
+    {
+      "id": "discovery",
+      "protocol": "udp",
+      "port": 5601,
+      "from": "rx",
+      "to": "tx"
+    },
+    {
+      "id": "discovery-announce",
+      "protocol": "udp",
+      "port": 5601,
+      "from": "tx",
+      "to": "rx"
+    },
+    {
+      "id": "media",
+      "protocol": "rtp/udp",
+      "port": 5600,
+      "from": "tx",
+      "to": "rx"
+    }
+  ],
+  "order": [
+    "tx",
+    "rx"
+  ]
+}

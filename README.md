@@ -72,6 +72,24 @@ GaplessAgentRuntime です。製品 branch で simulation build が必要な場�
 `GAR_TOOLS_DIR` はその配置を参照し、アプリ側の command には
 `GAR_TOOLS_ROOT` として後者を渡せます。
 
+## GarStream system topology
+
+TX/RX を別 workspace のまま一つの simulation system として扱うときは、RX parent が
+追跡する topology を指定します。
+
+```bash
+gar system build --file /path/to/GarStreamRx/gar-system.json --json
+gar system deploy --file /path/to/GarStreamRx/gar-system.json --json
+gar system start --file /path/to/GarStreamRx/gar-system.json --json
+```
+
+この topology は TX を先に build/deploy/start し、RX の discovery peer を TX の
+runtime private IP から deploy/start 時に解決します。discoveryのrequestとannounceは
+UDP 5601の逆向きlinkとして宣言し、firewall planも双方向に生成します。`/etc/gar/system/<app>.env` は
+GAR 管理の一時的な runtime 設定であり、persistent target config
+`/etc/gar/<app>.env` とは別です。artifact に persistent target config や machine IP を
+含めません。
+
 ## Product Branches
 
 製品ブランチでは、共通シーケンスをなるべく触らず、個別定義だけを追加します。

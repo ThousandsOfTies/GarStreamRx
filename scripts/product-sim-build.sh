@@ -69,6 +69,10 @@ Environment=GAR_ENC_SW_GPIO=22
 Environment=GAR_STREAM_RECEIVER_ID=gar-stream-rx-sim
 Environment=GAR_STREAM_DISCOVERY_PORT=5601
 Environment=GAR_STREAM_RX_PORT=5600
+# System topology values are materialised here by gar system deploy.  Keep
+# this after the static fallbacks: systemd applies assignments in declaration
+# order, so a non-default link port takes precedence at runtime.
+EnvironmentFile=-/etc/gar/system/gar-stream-rx.env
 ExecStartPre=/bin/sh -c 'for n in \$(seq 1 50); do [ -S /run/gar/hw_sim.sock ] && exit 0; sleep 0.1; done; exit 1'
 ExecStart=${deploy_dest}/gar-stream-rx
 Restart=on-failure

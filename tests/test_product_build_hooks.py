@@ -41,9 +41,24 @@ class ProductBuildHookTests(unittest.TestCase):
 
             self.assertEqual(0, result.returncode, result.stderr)
             service = (root / "artifacts/from-codespace/files/gar-sim-app.service").read_text(encoding="utf-8")
+            environment_file = "EnvironmentFile=-/etc/gar/system/gar-stream-rx.env"
+            self.assertIn(environment_file, service)
+            self.assertGreater(
+                service.index(environment_file),
+                service.index("Environment=GAR_STREAM_DISCOVERY_PORT=5601"),
+                "the GAR topology port must override the static fallback",
+            )
+            self.assertGreater(
+                service.index(environment_file),
+                service.index("Environment=GAR_STREAM_RX_PORT=5600"),
+                "the GAR topology port must override the static fallback",
+            )
             self.assertNotIn("GAR_STREAM_DISCOVERY_PEERS", service)
-            self.assertNotIn("gar-stream-rx.env", service)
+            self.assertNotIn("/etc/gar/gar-stream-rx.env", service)
             self.assertNotIn("192.0.2.10", service)
+            manifest = json.loads((root / "artifacts/from-codespace/artifact.json").read_text(encoding="utf-8"))
+            files = manifest["deploy"]["app"]["files"]
+            self.assertFalse(any(item["dest"] == "/etc/gar/gar-stream-rx.env" for item in files))
 
     def test_target_manifest_never_deploys_untracked_environment_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
