@@ -48,26 +48,6 @@ cp -a "${repo_root}/panel" "${panel_dir}"
 
 printf '%s\n' "${panel_dest}" > "${artifact_root}/files/panel-dir"
 
-discovery_peers="${GAR_STREAM_DISCOVERY_PEERS:-}"
-if [[ -z "${discovery_peers}" ]]; then
-  config_path="${GAR_CONFIG_PATH:-${repo_root}/../GAR/GaplessAgentRuntime/.gar/config.json}"
-  discovery_peers="$(python3 - "${config_path}" <<'PY'
-import json
-import sys
-from pathlib import Path
-
-path = Path(sys.argv[1])
-if not path.is_file():
-    raise SystemExit(0)
-for workspace in json.loads(path.read_text(encoding="utf-8")).get("workspaces", []):
-    connection = workspace.get("connection", {})
-    if workspace.get("name", "").endswith("GarStreamTx") or Path(connection.get("path", "")).name == "GarStreamTx":
-        print(workspace.get("ec2", {}).get("private_ip", ""))
-        break
-PY
-)"
-fi
-
 cat > "${service_file}" <<EOF
 [Unit]
 Description=GarStreamRx simulation application
@@ -88,9 +68,7 @@ Environment=GAR_ENC_DT_GPIO=21
 Environment=GAR_ENC_SW_GPIO=22
 Environment=GAR_STREAM_RECEIVER_ID=gar-stream-rx-sim
 Environment=GAR_STREAM_DISCOVERY_PORT=5601
-Environment=GAR_STREAM_DISCOVERY_PEERS=${discovery_peers}
 Environment=GAR_STREAM_RX_PORT=5600
-EnvironmentFile=-/etc/gar/gar-stream-rx.env
 ExecStartPre=/bin/sh -c 'for n in \$(seq 1 50); do [ -S /run/gar/hw_sim.sock ] && exit 0; sleep 0.1; done; exit 1'
 ExecStart=${deploy_dest}/gar-stream-rx
 Restart=on-failure

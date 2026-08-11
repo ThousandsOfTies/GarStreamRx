@@ -27,10 +27,6 @@ deploy_dest="${GAR_TARGET_ARTIFACT_DEST:-/opt/gar/apps/gar-stream-rx}"
 builder="${GAR_RX_TARGET_BUILDER:-${repo_root}/scripts/build-native-rx-target.sh}"
 target_configurer="${repo_root}/scripts/configure-rk3506-target.sh"
 spi_overlay="${repo_root}/config/rk3506-gar-stream-rx-spi0-overlay.dts"
-target_env_file="${GAR_TARGET_ENV_FILE:-${repo_root}/config/gar-stream-rx.target.env}"
-if [[ "${target_env_file}" != /* ]]; then
-  target_env_file="${repo_root}/${target_env_file}"
-fi
 
 if [[ "$#" -gt 1 || ( "$#" -eq 1 && "$1" != "clean" ) ]]; then
   echo "usage: $0 [clean]" >&2
@@ -170,24 +166,14 @@ GAR_STREAM_DISCOVERY_PORT=5601
 GAR_STREAM_RX_PORT=5600
 EOF
 
-deploy_env=0
-if [[ -f "${target_env_file}" ]]; then
-  cp "${target_env_file}" "${staging_dir}/gar-stream-rx.env"
-  chmod 0644 "${staging_dir}/gar-stream-rx.env"
-  deploy_env=1
-elif [[ -n "${GAR_TARGET_ENV_FILE:-}" ]]; then
-  echo "configured GAR_TARGET_ENV_FILE does not exist: ${target_env_file}" >&2
-  exit 1
-fi
-
-python3 - "${manifest_staging}" "${target}" "${deploy_dest}" "${deploy_env}" <<'PY'
+python3 - "${manifest_staging}" "${target}" "${deploy_dest}" <<'PY'
 from __future__ import annotations
 
 import json
 import sys
 from pathlib import Path
 
-output, target, destination, deploy_env = sys.argv[1:]
+output, target, destination = sys.argv[1:]
 files = [
     {
         "src": "files/gar-stream-rx",
@@ -195,14 +181,6 @@ files = [
         "mode": "0755",
     }
 ]
-if deploy_env == "1":
-    files.append(
-        {
-            "src": "files/gar-stream-rx/gar-stream-rx.env",
-            "dest": "/etc/gar/gar-stream-rx.env",
-            "mode": "0644",
-        }
-    )
 payload = {
     "name": "gar-stream-rx-target",
     "target": target,

@@ -142,8 +142,8 @@ GAR の CUSE SPI device がその書き込みを受け、Bridge を通じて Web
 
 TXはUDP 5601でSourceとして自己広告します。RXは検出したTXをチャンネル一覧として保持し、
 `SOURCE`メニューで選択されたTXへlease付き送信要求を返します。同一LANでは設定不要です。
-EC2のようにbroadcastが届かないnetworkでは、product build hookがRuntimeのworkspace情報から
-TX private IPをRX側の`GAR_STREAM_DISCOVERY_PEERS`へ渡し、unicast queryで同じprotocolを使います。
+simulation artifactは接続情報を含みません。EC2のようにbroadcastが届かないnetworkでunicast
+queryを使う場合は、RX Target上で明示的に`GAR_STREAM_DISCOVERY_PEERS`を設定してください。
 
 EC2はaarch64、Luckfox Lyra Plusはarmv7lなので、同じCPUバイナリにはなりません。
 ソース、GStreamer pipeline、PnP、GPIO/SPI I/Fは共通にし、Lyra版だけはRK3506
@@ -188,11 +188,16 @@ gar target build --workspace Local/GarStreamRx
 # 初回、またはTarget recipe更新後だけ
 gar target prepare --workspace Local/GarStreamRx
 
+# Targetの接続・GPIO設定は明示的に配置する
+gar target configure --workspace Local/GarStreamRx --app gar-stream-rx --file config/gar-stream-rx.target.env
+
 gar target deploy --workspace Local/GarStreamRx
 ```
 
-`config/gar-stream-rx.target.env`が存在する場合はartifactに含まれ、deploy時に
-`/etc/gar/gar-stream-rx.env`へ配置されます。`prepare`はBuildroot用の限定installerと
+`config/gar-stream-rx.target.env`はartifactへ自動で含めません。Target環境変数を変更する場合は
+`gar target configure --workspace Local/GarStreamRx --app gar-stream-rx --file config/gar-stream-rx.target.env`
+を明示的に実行してください。通常のbuild/deployは既存のTarget
+`/etc/gar/gar-stream-rx.env`を保持します。`prepare`はBuildroot用の限定installerと
 BusyBox init templateだけを導入します。初回`deploy`は現在のboot DTBへSPI0/spidevだけを
 追加し、元boot imageを`/var/lib/gar/backups`へ保存します。このとき再起動が必要です。
 再起動後は`/etc/init.d/S95gar-stream-rx`から起動し、artifact内のSPI moduleを必要な場合
