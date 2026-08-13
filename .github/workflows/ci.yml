@@ -1,0 +1,83 @@
+name: Product parent CI
+
+on:
+  pull_request:
+  push:
+    branches: [GarStreamRx]
+
+permissions:
+  contents: read
+
+jobs:
+  product-contracts:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - name: Checkout GarStreamRx parent and pinned children
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          persist-credentials: false
+      - name: Checkout canonical GAR main
+        uses: actions/checkout@v4
+        with:
+          repository: ThousandsOfTies/GaplessAgentRuntime
+          ref: main
+          path: _gar
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install CI cross-architecture contract toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y file gcc-arm-linux-gnueabihf
+      - name: Run parent tests and shell syntax checks
+        run: |
+          python -m unittest discover -s tests -v
+          bash -n \
+            ci/rx-target-contract-builder.sh \
+            scripts/product-sim-build.sh \
+            scripts/product-sim-env-build.sh \
+            scripts/product-target-build.sh \
+            scripts/configure-rk3506-target.sh
+      - name: Build actual simulation and Target contract bundles
+        run: |
+          rm -rf artifacts/ci artifacts/from-codespace
+          mkdir -p artifacts/ci
+          bash scripts/product-sim-build.sh
+          mv artifacts/from-codespace artifacts/ci/sim
+          GAR_RX_TARGET_BUILDER="$PWD/ci/rx-target-contract-builder.sh" bash scripts/product-target-build.sh
+          mv artifacts/from-codespace artifacts/ci/target
+      - name: Validate with GAR canonical contracts
+        if: always()
+        run: |
+          python _gar/.github/scripts/garstream-parent-validate.py \
+            --gar-root _gar \
+            --product-root . \
+            --sim-bundle artifacts/ci/sim \
+            --target-bundle artifacts/ci/target \
+            --sim-target luckfox-rk3506 \
+            --sim-architecture aarch64 \
+            --sim-abi gnu \
+            --sim-toolchain aarch64-linux-gnu \
+            --sim-payload elf \
+            --sim-entry files/gar-stream-rx/gar-stream-rx \
+            --target luckfox-rk3506 \
+            --target-architecture armv7l \
+            --target-abi gnueabihf \
+            --target-toolchain arm-buildroot-linux-gnueabihf \
+            --target-payload elf \
+            --target-entry files/gar-stream-rx/gar-stream-rx \
+            --target-build-mode ci-contract-stub \
+            --system-file gar-system.json \
+            --scenario-file scenarios/garstream_golden.json \
+            --report artifacts/ci/validation-report.json
+      - name: Retain product bundles and validation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gar-stream-rx-parent-${{ github.run_id }}
+          path: artifacts/ci/
+          if-no-files-found: error
+          retention-days: 14

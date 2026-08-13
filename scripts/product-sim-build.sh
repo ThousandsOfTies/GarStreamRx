@@ -69,6 +69,9 @@ Environment=GAR_ENC_SW_GPIO=22
 Environment=GAR_STREAM_RECEIVER_ID=gar-stream-rx-sim
 Environment=GAR_STREAM_DISCOVERY_PORT=5601
 Environment=GAR_STREAM_RX_PORT=5600
+# The Bridge exposes this atomic application observation through its node
+# metrics endpoint.  The path is runtime-owned; it is not part of the artifact.
+Environment=GAR_STREAM_METRICS_PATH=/run/gar/metrics/gar-stream-rx.json
 # System topology values are materialised here by gar system deploy.  Keep
 # this after the static fallbacks: systemd applies assignments in declaration
 # order, so a non-default link port takes precedence at runtime.

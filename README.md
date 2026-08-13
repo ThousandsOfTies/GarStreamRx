@@ -104,6 +104,21 @@ simulatorのlegacy CSVは同じ `hardware/` にあり、KY-040=20/21/22、LCD DC
 device contractを保持します。これは実機GPIO offsetやSSH/IPをartifactに含めるものでは
 ありません。
 
+## GarStream Golden scenario
+
+`scenarios/garstream_golden.json` はTX announce、RX discovery/lease、RTP frameとILI9341更新、
+KY-040の1 detent、EXIT、TX停止時の失効、再起動後の再接続を製品側で宣言します。assertionは
+短時間の収束をpollし、`cleanup` は途中のassertion失敗時を含めてTX serviceを起動状態へ戻します。
+各nodeの`GAR_STREAM_METRICS_PATH` はatomic JSONをBridgeのapplication metricへ渡します。Bridge
+URLやmachine-local peer/IPはscenarioへ保存せず、`gar system test`の実行時にsystem topologyから
+解決します。`frames.fps` は計測値、`configured_fps` は設定値です。RXの`drop_count`は
+`rtpjitterbuffer`のlost+late統計、TXの値は`videorate`が実際にdropしたframe数です。`latency_ms`は
+各GStreamer pipelineのlatency queryの計測結果で、queryがまだ利用不能な間だけ`null`になります。
+RXの常時colorbar描画とは別に、選択したRTP sourceが実際に表示された場合だけ
+`stream_display_update_count`と`stream_framebuffer_checksum`を更新し、停止前後の増分も検証します。
+artifact build ID/hashとservice healthはGARのsystem reportでもartifact metadataとruntime healthから
+補完されます。
+
 ## Product Branches
 
 製品ブランチでは、共通シーケンスをなるべく触らず、個別定義だけを追加します。
