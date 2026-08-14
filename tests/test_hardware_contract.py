@@ -44,7 +44,7 @@ class HardwareContractTests(unittest.TestCase):
             lines,
         )
         self.assertEqual(
-            ["RM_IO6:MOSI", "RM_IO5:MISO", "RM_IO7:SCLK", "RM_IO4:CS0"],
+            ["15:RM_IO6:MOSI", "16:RM_IO5:MISO", "14:RM_IO7:SCLK", "17:RM_IO4:CS0"],
             binding["mappings"][0]["physical_pins"],
         )
         self.assertEqual("spi0", binding["mappings"][0]["pinmux"])
