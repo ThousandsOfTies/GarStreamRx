@@ -1,11 +1,13 @@
 {
-  "name": "example-product-bundle",
+  "name": "example-product-target",
+  "target": "target-id",
+  "entrypoint": "/opt/gar/apps/example-product/run",
   "deploy": {
-    "example": {
+    "app": {
       "files": [
         {
-          "src": "files/example-output",
-          "dest": "~/example-output",
+          "src": "files/example-product",
+          "dest": "/opt/gar/apps/example-product",
           "mode": "0755"
         }
       ]

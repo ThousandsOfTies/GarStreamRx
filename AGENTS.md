@@ -35,8 +35,9 @@ intentionally optional-file friendly:
 Do not add product-specific source repositories to `main`. Put each product's
 repository set, config, and setup/build hooks on that product's branch.
 Artifact manifests are product-specific config, not shared runtime code. Use
-`config/artifact-manifest.example.json` as a template when a product branch
-needs a deploy manifest.
+`config/artifact-manifest.example.json` as a `deploy.app` template when a
+product branch needs a deploy manifest. Product hooks write `artifact.json`;
+GAR alone adds schema-v2 `artifact-info.json` snapshot metadata.
 
 GarStream connection ownership is RX-driven. TX devices advertise themselves,
 while RX retains discovered Sources, selects a channel, and renews its stream

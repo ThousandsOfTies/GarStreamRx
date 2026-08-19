@@ -163,9 +163,11 @@ scripts/product-clean.sh
 
 `make build` は `scripts/product-build.sh` があれば実行します。
 `make artifacts` は `scripts/product-artifacts.sh` があれば実行します。
-Artifact manifest は製品固有の定義です。必要な製品ブランチで
-`config/artifact-manifest.example.json` を参考に、製品用の設定ファイルや
-`scripts/product-artifacts.sh` を追加してください。
+Artifact manifest は製品固有の定義です。`artifact.json`はProduct build hookが
+標準`deploy.app`／`deploy.sim_env`形式で生成します。snapshot capture時にGARが
+schema v2 provenanceとchecksumを`artifact-info.json`として追加するため、Productは
+`artifact-info.json`や旧`gar-artifact.json`を生成しません。
+`config/artifact-manifest.example.json`は配置manifest schemaの参照例です。
 
 PlatformIO は Python 仮想環境 `~/.venvs/platformio` にインストールされ、
 `~/.bashrc` に PATH が追加されます。
