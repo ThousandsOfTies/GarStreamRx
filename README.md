@@ -259,3 +259,10 @@ systemd、Python、simulation用GPIO/SPI deviceは実機へ配置しません。
 ssh luckfox-lyra '/etc/init.d/S95gar-stream-rx status'
 ssh luckfox-lyra 'tail -n 50 /var/log/gar/gar-stream-rx.log'
 ```
+
+## Hardware / Target Pack boundary
+
+Rx固有のsimulation割当は`hardware/*.csv`、実機RK3506割当は
+`hardware/bindings/luckfox-rk3506.json`、overlayと実機設定ロジックは`config/`と
+`scripts/`が所有します。一方、RK3506の能力、BusyBox provisioning、ILI9341の汎用
+device providerなどは他Productでも再利用できるため`gar-tools/targets`に残します。
