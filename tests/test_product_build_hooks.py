@@ -85,15 +85,17 @@ class ProductBuildHookTests(unittest.TestCase):
     def test_target_manifest_never_deploys_untracked_environment_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            (root / "scripts").mkdir()
+            capsule = root / "scripts/targets/luckfox-rk3506"
+            capsule.mkdir(parents=True)
             shutil.copy2(
-                REPOSITORY_ROOT / "scripts" / "product-target-build.sh",
-                root / "scripts",
+                REPOSITORY_ROOT
+                / "scripts/targets/luckfox-rk3506/package.sh",
+                capsule,
             )
-            (root / "scripts" / "configure-rk3506-target.sh").touch()
-            (root / "scripts" / "configure-rk3506-target.sh").chmod(0o755)
+            (capsule / "configure-target").touch()
+            (capsule / "configure-target").chmod(0o755)
+            (capsule / "rk3506-gar-stream-rx-spi0-overlay.dts").touch()
             (root / "config").mkdir()
-            (root / "config/rk3506-gar-stream-rx-spi0-overlay.dts").touch()
             (root / "config/gar-stream-rx.target.env").write_text(
                 "GAR_STREAM_DISCOVERY_PEERS=192.0.2.10\n", encoding="utf-8"
             )
@@ -102,7 +104,7 @@ class ProductBuildHookTests(unittest.TestCase):
             builder.chmod(0o755)
 
             result = self._run(
-                root / "scripts/product-target-build.sh",
+                capsule / "package.sh",
                 {"GAR_RX_TARGET_BUILDER": str(builder)},
             )
 

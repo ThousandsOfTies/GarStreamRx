@@ -197,6 +197,7 @@ queryを使う場合は、RX Target上で明示的に`GAR_STREAM_DISCOVERY_PEERS
 EC2はaarch64、Luckfox Lyra Plusはarmv7lなので、同じCPUバイナリにはなりません。
 ソース、GStreamer pipeline、PnP、GPIO/SPI I/Fは共通にし、Lyra版だけはRK3506
 Buildroot SDKのtoolchain/sysrootで別ビルドします。`product-target-build.sh`は
+deployment dispatcherへの互換入口です。`scripts/targets/luckfox-rk3506/`のTarget Capsuleは
 `luckfox-rk3506`だけを受け付け、生成物がARM 32-bit ELFであることを検査するため、
 aarch64 simulation artifactを実機へ誤配布しません。
 
@@ -254,6 +255,10 @@ BusyBox init templateだけを導入します。初回`deploy`は現在のboot D
 交換して直ちに再起動します。将来のimageがdriverを内蔵した場合、module loadは自動的に
 skipされます。
 systemd、Python、simulation用GPIO/SPI deviceは実機へ配置しません。
+
+Application契約は`sources/gar-stream-rx/app.json`、Application・Lyra・配線・artifactの
+組み合わせは`config/deployments/luckfox-rk3506.json`にあります。構成だけを検査するには
+`make check-deployment`または`scripts/product-target-build.sh --describe`を使います。
 
 実機上の確認:
 

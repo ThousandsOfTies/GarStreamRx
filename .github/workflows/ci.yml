@@ -39,8 +39,15 @@ jobs:
             ci/rx-target-contract-builder.sh \
             scripts/product-sim-build.sh \
             scripts/product-sim-env-build.sh \
+            scripts/package-target.sh \
             scripts/product-target-build.sh \
-            scripts/configure-rk3506-target.sh
+            scripts/configure-rk3506-target.sh \
+            scripts/targets/luckfox-rk3506/package.sh \
+            scripts/targets/luckfox-rk3506/build-native.sh \
+            scripts/targets/luckfox-rk3506/build-kernel-modules.sh \
+            scripts/targets/luckfox-rk3506/build-sdk-rootfs.sh \
+            scripts/targets/luckfox-rk3506/configure-target
+          scripts/product-target-build.sh --describe >/dev/null
       - name: Build actual simulation and Target contract bundles
         run: |
           rm -rf artifacts/ci artifacts/from-codespace

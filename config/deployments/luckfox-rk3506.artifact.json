@@ -1,0 +1,15 @@
+{
+  "name": "gar-stream-rx-target",
+  "target": "luckfox-rk3506",
+  "deploy": {
+    "app": {
+      "files": [
+        {
+          "src": "files/gar-stream-rx",
+          "dest": "/opt/gar/apps/gar-stream-rx",
+          "mode": "0755"
+        }
+      ]
+    }
+  }
+}

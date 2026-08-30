@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "id": "luckfox-rk3506",
+  "status": "active",
+  "product": "gar-stream-rx",
+  "application": "sources/gar-stream-rx/app.json",
+  "target": "luckfox-rk3506",
+  "binding": "hardware/bindings/luckfox-rk3506.json",
+  "artifact": {
+    "kind": "ssh-app",
+    "manifest": "config/deployments/luckfox-rk3506.artifact.json"
+  },
+  "packager": "scripts/targets/luckfox-rk3506/package.sh"
+}
