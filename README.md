@@ -1,18 +1,14 @@
-# gar-build-env
+# GarStreamRx
 
-Gapless Agent Runtime 用の Codespaces/devcontainer ビルド環境です。
-
-このリポジトリは Codespaces/devcontainer の共通実行基盤です。
-
-`main` は共通 devspace runtime だけを持ちます。製品ごとの設定は
-`gar-build-env` の製品ブランチに保存します。製品ブランチは
-`config/product.env`、任意の `scripts/product-*.sh`、必要なら
-`sources/*` submodule を持ちます。
+`gar-stream-rx` applicationと `luckfox-rk3506` 物理targetを固定した独立Product
+repositoryです。Codespaces/devcontainer設定、Product固有hardware、build hook、
+固定artifact契約を同じrepositoryで管理します。別の物理targetは別Product
+repositoryとして作成します。
 
 ## Layout
 
 ```text
-gar-build-env/
+GarStreamRx/
   .devcontainer/
   config/
     common.env
@@ -93,11 +89,11 @@ GAR 管理の一時的な runtime 設定であり、persistent target config
 ## GarStream hardware contract
 
 RXのdisplay、KY-040、network要件は `hardware/requirements.json`、Luckfox Lyra Plusの
-resourceとの対応は `hardware/bindings/luckfox-rk3506.json` に追跡します。Target capability
+resourceとの対応は `hardware/binding.json` に追跡します。Target capability
 を含めた3層を次で検査してから実機へ配置します。
 
 ```bash
-gar hw validate --workspace Local/GarStreamRx --binding hardware/bindings/luckfox-rk3506.json --json
+gar hw validate --workspace Local/GarStreamRx --binding hardware/binding.json --json
 ```
 
 simulatorのlegacy CSVは同じ `hardware/` にあり、KY-040=20/21/22、LCD DC/RST=23/24の
@@ -143,7 +139,7 @@ git add -A
 git commit -m "Update product repo"
 git push
 
-cd path/to/gar-build-env
+cd path/to/GarStreamRx
 git add path/to/submodule
 git commit -m "Update product submodule pointer"
 git push
@@ -151,7 +147,7 @@ git push
 
 ## Product Build Hooks
 
-`main` は製品固有のビルド手順を持ちません。製品ブランチで必要に応じて
+Product固有のビルド手順はこのrepositoryのhookとして管理します。必要に応じて
 次の hook を追加します。
 
 ```text
@@ -197,7 +193,7 @@ queryを使う場合は、RX Target上で明示的に`GAR_STREAM_DISCOVERY_PEERS
 EC2はaarch64、Luckfox Lyra Plusはarmv7lなので、同じCPUバイナリにはなりません。
 ソース、GStreamer pipeline、PnP、GPIO/SPI I/Fは共通にし、Lyra版だけはRK3506
 Buildroot SDKのtoolchain/sysrootで別ビルドします。`product-target-build.sh`は
-deployment dispatcherへの互換入口です。`scripts/targets/luckfox-rk3506/`のTarget Capsuleは
+固定targetへの入口です。`scripts/target/`は
 `luckfox-rk3506`だけを受け付け、生成物がARM 32-bit ELFであることを検査するため、
 aarch64 simulation artifactを実機へ誤配布しません。
 
@@ -256,9 +252,9 @@ BusyBox init templateだけを導入します。初回`deploy`は現在のboot D
 skipされます。
 systemd、Python、simulation用GPIO/SPI deviceは実機へ配置しません。
 
-Application契約は`sources/gar-stream-rx/app.json`、Application・Lyra・配線・artifactの
-組み合わせは`config/deployments/luckfox-rk3506.json`にあります。構成だけを検査するには
-`make check-deployment`または`scripts/product-target-build.sh --describe`を使います。
+Application契約は`sources/gar-stream-rx/app.json`、固定artifact契約は
+`config/artifact.json`、Lyra配線は`hardware/binding.json`にあります。構成検査には
+`make check-target`を使います。
 
 実機上の確認:
 
@@ -270,6 +266,6 @@ ssh luckfox-lyra 'tail -n 50 /var/log/gar/gar-stream-rx.log'
 ## Hardware / Target Pack boundary
 
 Rx固有のsimulation割当は`hardware/*.csv`、実機RK3506割当は
-`hardware/bindings/luckfox-rk3506.json`、overlayと実機設定ロジックは`config/`と
+`hardware/binding.json`、overlayと実機設定ロジックは`config/`と
 `scripts/`が所有します。一方、RK3506の能力、BusyBox provisioning、ILI9341の汎用
 device providerなどは他Productでも再利用できるため`gar-tools/targets`に残します。

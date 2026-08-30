@@ -5,6 +5,6 @@ from pathlib import Path
 import runpy
 
 runpy.run_path(
-    str(Path(__file__).resolve().parent / "targets/luckfox-rk3506/collect-runtime.py"),
+    str(Path(__file__).resolve().parent / "target/collect-runtime.py"),
     run_name="__main__",
 )

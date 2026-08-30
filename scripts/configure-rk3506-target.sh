@@ -3,4 +3,4 @@
 set -euo pipefail
 
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-exec "${repo_root}/scripts/targets/luckfox-rk3506/configure-target" "$@"
+exec "${repo_root}/scripts/target/configure-target" "$@"

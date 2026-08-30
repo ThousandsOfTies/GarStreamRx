@@ -5,9 +5,8 @@ PRODUCT_ARTIFACTS_SCRIPT ?= scripts/product-artifacts.sh
 PRODUCT_CLEAN_SCRIPT ?= scripts/product-clean.sh
 
 ARTIFACT_ROOT ?= artifacts/from-codespace
-DEPLOYMENT ?= luckfox-rk3506
 
-.PHONY: all setup sync build artifacts clean check-deployment
+.PHONY: all setup sync build artifacts clean check-target
 
 all: artifacts
 
@@ -39,6 +38,8 @@ clean:
 	fi
 	rm -rf "$(ARTIFACT_ROOT)"
 
-check-deployment:
-	scripts/package-target.sh --deployment "$(DEPLOYMENT)" --describe >/dev/null
-	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_deployment_profiles.py' -v
+check-target:
+	bash -n scripts/product-target-build.sh scripts/target/*.sh
+	python3 -m json.tool config/artifact.json >/dev/null
+	python3 -m json.tool hardware/binding.json >/dev/null
+	PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -p 'test_product_contract.py' -v

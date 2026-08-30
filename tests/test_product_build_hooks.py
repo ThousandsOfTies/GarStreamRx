@@ -85,11 +85,11 @@ class ProductBuildHookTests(unittest.TestCase):
     def test_target_manifest_never_deploys_untracked_environment_file(self) -> None:
         with tempfile.TemporaryDirectory() as temporary_directory:
             root = Path(temporary_directory)
-            capsule = root / "scripts/targets/luckfox-rk3506"
+            capsule = root / "scripts/target"
             capsule.mkdir(parents=True)
             shutil.copy2(
                 REPOSITORY_ROOT
-                / "scripts/targets/luckfox-rk3506/package.sh",
+                / "scripts/target/package.sh",
                 capsule,
             )
             (capsule / "configure-target").touch()

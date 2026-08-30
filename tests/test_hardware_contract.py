@@ -14,9 +14,7 @@ class HardwareContractTests(unittest.TestCase):
     def test_requirements_and_luckfox_binding_are_complete_and_neutral(self) -> None:
         hardware = REPOSITORY_ROOT / "hardware"
         requirements = json.loads((hardware / "requirements.json").read_text(encoding="utf-8"))
-        binding = json.loads(
-            (hardware / "bindings" / "luckfox-rk3506.json").read_text(encoding="utf-8")
-        )
+        binding = json.loads((hardware / "binding.json").read_text(encoding="utf-8"))
 
         self.assertEqual({"schema_version", "product", "requirements"}, set(requirements))
         self.assertEqual(1, requirements["schema_version"])

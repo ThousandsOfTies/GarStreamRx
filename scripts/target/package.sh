@@ -2,7 +2,7 @@
 # Build and stage the physical Luckfox Lyra (RK3506/armv7l) artifact.
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [[ -f "${repo_root}/config/product.env" ]]; then
   # shellcheck disable=SC1091
   source "${repo_root}/config/product.env"
@@ -24,9 +24,9 @@ case "${artifact_root}" in
 esac
 artifact_dir="${artifact_root}/files/gar-stream-rx"
 deploy_dest="${GAR_TARGET_ARTIFACT_DEST:-/opt/gar/apps/gar-stream-rx}"
-builder="${GAR_RX_TARGET_BUILDER:-${repo_root}/scripts/targets/luckfox-rk3506/build-native.sh}"
-target_configurer="${repo_root}/scripts/targets/luckfox-rk3506/configure-target"
-spi_overlay="${repo_root}/scripts/targets/luckfox-rk3506/rk3506-gar-stream-rx-spi0-overlay.dts"
+builder="${GAR_RX_TARGET_BUILDER:-${repo_root}/scripts/target/build-native.sh}"
+target_configurer="${repo_root}/scripts/target/configure-target"
+spi_overlay="${repo_root}/scripts/target/rk3506-gar-stream-rx-spi0-overlay.dts"
 
 if [[ "$#" -gt 1 || ( "$#" -eq 1 && "$1" != "clean" ) ]]; then
   echo "usage: $0 [clean]" >&2

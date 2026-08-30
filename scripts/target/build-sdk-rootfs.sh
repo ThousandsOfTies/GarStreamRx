@@ -51,7 +51,7 @@ if [[ "${GAR_RK3506_SDK_CONTAINER:-0}" != 1 ]]; then
     --mount "type=bind,src=${sdk_root},dst=/sdk" \
     --mount "type=bind,src=${repo_root},dst=/gar,readonly" \
     "${image}" \
-    /gar/scripts/targets/luckfox-rk3506/build-sdk-rootfs.sh "${mode}"
+    /gar/scripts/target/build-sdk-rootfs.sh "${mode}"
 fi
 
 cd /sdk

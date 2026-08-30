@@ -161,7 +161,7 @@ if [[ ! -f "${binary}" ]]; then
 fi
 mkdir -p "$(dirname "${output}")"
 install -m 0755 "${binary}" "${output}"
-collector="${repo_root}/scripts/targets/luckfox-rk3506/collect-runtime.py"
+collector="${repo_root}/scripts/target/collect-runtime.py"
 if [[ ! -x "${collector}" ]]; then
   echo "RK3506 runtime collector is not executable: ${collector}" >&2
   exit 1
@@ -171,7 +171,7 @@ fi
   --runtime-root "${runtime_root}" \
   --binary "${output}" \
   --output "$(dirname "${output}")"
-module_builder="${repo_root}/scripts/targets/luckfox-rk3506/build-kernel-modules.sh"
+module_builder="${repo_root}/scripts/target/build-kernel-modules.sh"
 if [[ ! -x "${module_builder}" ]]; then
   echo "RK3506 kernel module builder is not executable: ${module_builder}" >&2
   exit 1

@@ -1,4 +1,4 @@
-# GarStreamRx Luckfox Lyra Plus Target Capsule
+# GarStreamRx Luckfox Lyra Plus target
 
 This directory owns the RK3506 cross-build, runtime closure, SPI kernel
 modules, Product Device Tree overlay, target configuration, and artifact
