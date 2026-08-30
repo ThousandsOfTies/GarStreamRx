@@ -58,6 +58,11 @@ jobs:
       - name: Validate with GAR canonical contracts
         if: always()
         run: |
+          # GAR main still probes the former multi-target binding path.
+          # Keep that compatibility alias ephemeral; the Product owns one
+          # canonical binding at hardware/binding.json.
+          mkdir -p hardware/bindings
+          ln -s ../binding.json hardware/bindings/luckfox-rk3506.json
           python _gar/.github/scripts/garstream-parent-validate.py \
             --gar-root _gar \
             --product-root . \
