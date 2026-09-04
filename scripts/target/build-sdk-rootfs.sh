@@ -2,7 +2,7 @@
 # Configure and build the Luckfox Lyra Plus Buildroot sysroot/rootfs.
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 mode="${1:-build}"
 case "${mode}" in
   config|build) ;;
@@ -63,6 +63,80 @@ defconfig="${GAR_RK3506_DEFCONFIG:-luckfox_lyra_plus_buildroot_spinand_defconfig
 make -C buildroot \
   O="${buildroot_output}" \
   rockchip_rk3506_luckfox_defconfig
+
+# The exported WSL SDK does not always carry a usable .repo Git checkout.
+# RKADK's CMake version helper only generates version.h when it sees .git, so
+# provide a deterministic fallback for this source-only SDK export.
+rkadk_version="/sdk/app/rkadk/include/version.h"
+if [[ ! -f "${rkadk_version}" ]]; then
+  install -D -m 0644 /dev/stdin "${rkadk_version}" <<'EOF'
+/* Generated fallback for SDK sources without a linked Git checkout. */
+#ifndef SRC_VERSION_H_
+#define SRC_VERSION_H_
+
+#define RKADK_VERSION_INFO "recovered SDK build"
+#define RKADK_BUILD_INFO   "built in Docker"
+
+#endif /* SRC_VERSION_H_ */
+EOF
+fi
+
+# Use Buildroot's generic 6.1 headers instead of the vendor make-4.3 archive
+# reference, which is no longer available at the original mirror.  Keep the
+# source mirror explicit so the build can reuse a populated dl/ cache.
+buildroot/utils/config --file "${config_file}" --disable BR2_KERNEL_HEADERS_AS_KERNEL
+buildroot/utils/config --file "${config_file}" --enable BR2_KERNEL_HEADERS_6_1
+buildroot/utils/config --file "${config_file}" --disable BR2_LINUX_KERNEL_CUSTOM_LOCAL
+buildroot/utils/config --file "${config_file}" --set-str BR2_DEFAULT_KERNEL_HEADERS "6.1.79"
+buildroot/utils/config --file "${config_file}" --set-str BR2_PRIMARY_SITE 'https\://sources.buildroot.net'
+buildroot/utils/config --file "${config_file}" --set-str BR2_BACKUP_SITE 'https\://sources.buildroot.net'
+
+# The Product needs GStreamer/DTC, not the vendor's optional multimedia,
+# debug, network-test, or target-Python stack. Disabling these avoids the
+# obsolete FFmpeg host-make download and keeps SDK preparation finite while
+# preserving the application runtime.
+disabled_symbols=(
+  BR2_PACKAGE_FFMPEG
+  BR2_PACKAGE_SDL2
+  BR2_PACKAGE_VIM
+  BR2_PACKAGE_VIM_RUNTIME
+  BR2_PACKAGE_NANO
+  BR2_PACKAGE_RIPGREP
+  BR2_PACKAGE_STRESSAPPTEST
+  BR2_PACKAGE_DHRYSTONE
+  BR2_PACKAGE_SOX
+  BR2_PACKAGE_DOSFSTOOLS
+  BR2_PACKAGE_FATRESIZE
+  BR2_PACKAGE_EVTEST
+  BR2_PACKAGE_INPUT_EVENT_DAEMON
+  BR2_PACKAGE_MEMTESTER
+  BR2_PACKAGE_MHZ
+  BR2_PACKAGE_MINICOM
+  BR2_PACKAGE_NANOCOM
+  BR2_PACKAGE_PARTED
+  BR2_PACKAGE_PICOCOM
+  BR2_PACKAGE_PM_UTILS
+  BR2_PACKAGE_USBMOUNT
+  BR2_PACKAGE_CAN_UTILS
+  BR2_PACKAGE_DNSMASQ
+  BR2_PACKAGE_HOSTAPD
+  BR2_PACKAGE_IPERF
+  BR2_PACKAGE_IPERF3
+  BR2_PACKAGE_TIFF
+  BR2_PACKAGE_SQLITE
+  BR2_PACKAGE_HOST_RUSTC
+  BR2_PACKAGE_HOST_RUST_BIN
+  BR2_PACKAGE_PYTHON3
+  BR2_PACKAGE_PYTHON3_PYC_ONLY
+  BR2_PACKAGE_PYTHON3_PYEXPAT
+  BR2_PACKAGE_PYTHON3_SQLITE
+  BR2_PACKAGE_PYTHON3_SSL
+  BR2_PACKAGE_PYTHON3_UNICODEDATA
+  BR2_PACKAGE_PYTHON3_ZLIB
+)
+for symbol in "${disabled_symbols[@]}"; do
+  buildroot/utils/config --file "${config_file}" --disable "${symbol}"
+done
 
 symbols=(
   BR2_PACKAGE_GSTREAMER1

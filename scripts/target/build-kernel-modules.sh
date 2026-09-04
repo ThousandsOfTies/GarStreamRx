@@ -2,7 +2,7 @@
 # Build the two loadable SPI modules omitted from the stock Lyra Plus image.
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [[ -f "${repo_root}/config/rk3506-sdk.env" ]]; then
   # shellcheck disable=SC1091
   source "${repo_root}/config/rk3506-sdk.env"

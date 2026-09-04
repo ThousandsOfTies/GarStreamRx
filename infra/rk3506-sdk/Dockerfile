@@ -44,6 +44,7 @@ RUN set -eux; \
       libssl-dev \
       live-build \
       make \
+      ninja-build \
       patch \
       patchelf \
       passwd \

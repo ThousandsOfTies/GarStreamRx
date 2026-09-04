@@ -2,7 +2,7 @@
 # Cross-compile GarStreamRx for the 32-bit RK3506 Buildroot userspace.
 set -euo pipefail
 
-repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 if [[ -f "${repo_root}/config/rk3506-sdk.env" ]]; then
   # shellcheck disable=SC1091
   source "${repo_root}/config/rk3506-sdk.env"
@@ -97,62 +97,94 @@ case "${pkg_config}" in
     exit 1
     ;;
 esac
-if ! command -v docker >/dev/null 2>&1; then
-  echo "Docker is required for the reproducible RK3506 target build" >&2
-  exit 1
-fi
-case "$(uname -m)" in
-  x86_64|amd64) ;;
-  *)
-    echo "The official Luckfox SDK host tools require an x86_64 build machine." >&2
-    echo "Run gar target build from the local WSL workspace, not the Graviton simulation host." >&2
-    exit 1
-    ;;
-esac
-
 build_root="$(mktemp -d /tmp/gar-stream-rx-rk3506.XXXXXX)"
 trap 'rm -rf -- "${build_root}"' EXIT
-image="${GAR_RX_BUILD_IMAGE:-gar-build-env:latest}"
 container_sysroot="/rk3506-host/${sysroot_relative}"
 container_pkg_config="/rk3506-host/bin/${pkg_config_name}"
 
-docker build -t "${image}" "${repo_root}"
-docker run --rm \
-  --user "$(id -u):$(id -g)" \
-  --env HOME=/tmp \
-  --env RK3506_TOOLCHAIN_BIN=/rk3506-host/bin \
-  --env RK3506_TRIPLE="${triple}" \
-  --env RK3506_SYSROOT="${container_sysroot}" \
-  --env RK3506_PKG_CONFIG="${container_pkg_config}" \
-  --env PKG_CONFIG_SYSROOT_DIR="${container_sysroot}" \
-  --env PKG_CONFIG_LIBDIR="${container_sysroot}/usr/lib/pkgconfig:${container_sysroot}/usr/share/pkgconfig:${container_sysroot}/lib/pkgconfig" \
-  --mount "type=bind,src=${source_dir},dst=/src,readonly" \
-  --mount "type=bind,src=${repo_root}/config/rk3506-buildroot-toolchain.cmake,dst=/toolchain.cmake,readonly" \
-  --mount "type=bind,src=${host_dir},dst=/rk3506-host,readonly" \
-  --mount "type=bind,src=${build_root},dst=/build" \
-  "${image}" sh -eu -c '
-    if ! "$RK3506_PKG_CONFIG" --exists gstreamer-1.0 gstreamer-app-1.0 glib-2.0; then
-      echo "RK3506 sysroot is missing GStreamer/GLib development metadata." >&2
-      echo "Enable the packages documented in sources/gar-stream-rx/README.md and rebuild the SDK rootfs." >&2
+if [[ "${GAR_RX_DIRECT_BUILD:-0}" == 1 ]]; then
+  # DockerBuildEnvironment already provides a reproducible Linux build image.
+  # A second Docker bind would expose /workspace only inside the outer
+  # container, so the Windows Docker daemon could not resolve its source path.
+  export RK3506_TOOLCHAIN_BIN="${toolchain_bin}"
+  export RK3506_TRIPLE="${triple}"
+  export RK3506_SYSROOT="${sysroot}"
+  export RK3506_PKG_CONFIG="${pkg_config}"
+  export PKG_CONFIG_SYSROOT_DIR="${sysroot}"
+  export PKG_CONFIG_LIBDIR="${sysroot}/usr/lib/pkgconfig:${sysroot}/usr/share/pkgconfig:${sysroot}/lib/pkgconfig"
+  if ! "${pkg_config}" --exists gstreamer-1.0 gstreamer-app-1.0 glib-2.0; then
+    echo "RK3506 sysroot is missing GStreamer/GLib development metadata." >&2
+    echo "Enable the packages documented in sources/gar-stream-rx/README.md and rebuild the SDK rootfs." >&2
+    exit 1
+  fi
+  cmake -S "${source_dir}" -B "${build_root}" -GNinja \
+    -DCMAKE_TOOLCHAIN_FILE="${repo_root}/config/rk3506-buildroot-toolchain.cmake" \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DPKG_CONFIG_EXECUTABLE="${pkg_config}" \
+    -DBUILD_TESTING=OFF
+  cmake --build "${build_root}"
+  description="$(file "${build_root}/gar-stream-rx")"
+  case "${description}" in
+    *"ELF 32-bit"*"ARM"*) ;;
+    *) echo "unexpected RK3506 binary: ${description}" >&2; exit 1 ;;
+  esac
+  strip="${toolchain_bin}/${triple}-strip"
+  if [[ -x "${strip}" ]]; then
+    "${strip}" "${build_root}/gar-stream-rx"
+  fi
+  echo "${description}"
+else
+  if ! command -v docker >/dev/null 2>&1; then
+    echo "Docker is required for the reproducible RK3506 target build" >&2
+    exit 1
+  fi
+  case "$(uname -m)" in
+    x86_64|amd64) ;;
+    *)
+      echo "The official Luckfox SDK host tools require an x86_64 build machine." >&2
+      echo "Run gar target build from the local WSL workspace, not the Graviton simulation host." >&2
       exit 1
-    fi
-    cmake -S /src -B /build -GNinja \
-      -DCMAKE_TOOLCHAIN_FILE=/toolchain.cmake \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DPKG_CONFIG_EXECUTABLE="$RK3506_PKG_CONFIG" \
-      -DBUILD_TESTING=OFF
-    cmake --build /build
-    description=$(file /build/gar-stream-rx)
-    case "$description" in
-      *"ELF 32-bit"*"ARM"*) ;;
-      *) echo "unexpected RK3506 binary: $description" >&2; exit 1 ;;
-    esac
-    strip=/rk3506-host/bin/${RK3506_TRIPLE}-strip
-    if [ -x "$strip" ]; then
-      "$strip" /build/gar-stream-rx
-    fi
-    echo "$description"
-  '
+      ;;
+  esac
+  image="${GAR_RX_BUILD_IMAGE:-gar-build-env:latest}"
+  docker build -t "${image}" "${repo_root}"
+  docker run --rm \
+    --user "$(id -u):$(id -g)" \
+    --env HOME=/tmp \
+    --env RK3506_TOOLCHAIN_BIN=/rk3506-host/bin \
+    --env RK3506_TRIPLE="${triple}" \
+    --env RK3506_SYSROOT="${container_sysroot}" \
+    --env RK3506_PKG_CONFIG="${container_pkg_config}" \
+    --env PKG_CONFIG_SYSROOT_DIR="${container_sysroot}" \
+    --env PKG_CONFIG_LIBDIR="${container_sysroot}/usr/lib/pkgconfig:${container_sysroot}/usr/share/pkgconfig:${container_sysroot}/lib/pkgconfig" \
+    --mount "type=bind,src=${source_dir},dst=/src,readonly" \
+    --mount "type=bind,src=${repo_root}/config/rk3506-buildroot-toolchain.cmake,dst=/toolchain.cmake,readonly" \
+    --mount "type=bind,src=${host_dir},dst=/rk3506-host,readonly" \
+    --mount "type=bind,src=${build_root},dst=/build" \
+    "${image}" sh -eu -c '
+      if ! "$RK3506_PKG_CONFIG" --exists gstreamer-1.0 gstreamer-app-1.0 glib-2.0; then
+        echo "RK3506 sysroot is missing GStreamer/GLib development metadata." >&2
+        echo "Enable the packages documented in sources/gar-stream-rx/README.md and rebuild the SDK rootfs." >&2
+        exit 1
+      fi
+      cmake -S /src -B /build -GNinja \
+        -DCMAKE_TOOLCHAIN_FILE=/toolchain.cmake \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DPKG_CONFIG_EXECUTABLE="$RK3506_PKG_CONFIG" \
+        -DBUILD_TESTING=OFF
+      cmake --build /build
+      description=$(file /build/gar-stream-rx)
+      case "$description" in
+        *"ELF 32-bit"*"ARM"*) ;;
+        *) echo "unexpected RK3506 binary: $description" >&2; exit 1 ;;
+      esac
+      strip=/rk3506-host/bin/${RK3506_TRIPLE}-strip
+      if [ -x "$strip" ]; then
+        "$strip" /build/gar-stream-rx
+      fi
+      echo "$description"
+    '
+fi
 
 binary="${build_root}/gar-stream-rx"
 if [[ ! -f "${binary}" ]]; then
